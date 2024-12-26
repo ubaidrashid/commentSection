@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nested Comments</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .comment {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    .reply {
+      margin-left: 20px;
+      border-left: 2px solid #ccc;
+      padding-left: 10px;
+    }
+    .input-area {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Comment System</h1>
+  <div class="input-area">
+    <textarea id="commentInput" placeholder="Write a comment..." rows="3" style="width: 100%;"></textarea>
+    <button onclick="postComment()">Submit</button>
+  </div>
+  <div id="commentsContainer"></div>
+<img src="images/avatars/image-amyrobson.png" alt="">
+  <script>
+    // Function to fetch and load comments from the JSON file
+    async function loadComments() {
+      try {
+        const response = await fetch('assets/data.json'); // Ensure the path is correct
+        if (!response.ok) {
+          throw new Error('Failed to load comments.json');
+        }
+        const data = await response.json();
+        console.log(data)
+        displayComments(data.comments);
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    // Function to display comments and replies
+    function displayComments(comments, parentId = null) {
+      const container = parentId 
+        ? document.querySelector(`#replies-${parentId}`) 
+        : document.getElementById('commentsContainer');
+
+      comments.forEach(comment => {
+        const commentDiv = document.createElement('div');
+        commentDiv.classList.add('comment');
+        if (parentId) commentDiv.classList.add('reply');
+        commentDiv.id = `comment-${comment.id}`;
+
+        commentDiv.innerHTML = `
+          <p><strong>${comment.user.username}</strong>: ${comment.content}</p>
+          <p><small>${comment.createdAt} | Score: ${comment.score}</small></p>
+          <button onclick="showReplyInput('${comment.id}')">Reply</button>
+          <div id="replies-${comment.id}" class="replies"></div>
+        `;
+
+        container.appendChild(commentDiv);
+
+        if (comment.replies && comment.replies.length > 0) {
+          displayComments(comment.replies, comment.id);
+        }
+      });
+    }
+
+    function postComment(parentId = null) {
+      const inputField = parentId 
+        ? document.querySelector(`#replyInput-${parentId}`) 
+        : document.getElementById('commentInput');
+      const commentText = inputField.value.trim();
+      
+      if (commentText === '') {
+        alert('Please write a comment!');
+        return;
+      }
+
+      const commentContainer = parentId 
+        ? document.querySelector(`#replies-${parentId}`) 
+        : document.getElementById('commentsContainer');
+
+      const commentDiv = document.createElement('div');
+      commentDiv.classList.add('comment');
+      if (parentId) commentDiv.classList.add('reply');
+      commentDiv.innerHTML = `
+        <p><strong>Current User</strong>: ${commentText}</p>
+        <button onclick="showReplyInput('${Date.now()}')">Reply</button>
+        <div id="replies-${Date.now()}" class="replies"></div>
+      `;
+
+      commentContainer.appendChild(commentDiv);
+      inputField.value = '';
+    }
+
+    function showReplyInput(commentId) {
+      const replyContainer = document.querySelector(`#replies-${commentId}`);
+
+      if (!replyContainer.querySelector(`#replyInput-${commentId}`)) {
+        const replyInputDiv = document.createElement('div');
+        replyInputDiv.classList.add('input-area');
+        replyInputDiv.innerHTML = `
+          <textarea id="replyInput-${commentId}" placeholder="Write a reply..." rows="2" style="width: 100%;"></textarea>
+          <button onclick="postComment('${commentId}')">Submit Reply</button>
+        `;
+
+        replyContainer.appendChild(replyInputDiv);
+      }
+    }
+
+    // Load comments on page load
+    window.onload = loadComments;
+  </script>
+</body>
+</html>
