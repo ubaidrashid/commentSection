@@ -69,6 +69,7 @@ function renderComments(commentsArray, parentElement, isReply = false) {
     // Comment HTML structure
     commentBox.innerHTML = `
     <div class='awi ${comment.id}'>
+    <div class="counterCover">
       <div class="counter">
         <div class="plus" onclick="incrementScore(${comment.id})">
           <img src="assets/images/icon-plus.svg" alt="Plus">
@@ -78,6 +79,27 @@ function renderComments(commentsArray, parentElement, isReply = false) {
           <img src="assets/images/icon-minus.svg" alt="Minus">
         </div>
       </div>
+            <div class="repCover">
+         <!-- Show delete button only for current user's comments/replies -->
+            ${comment.user.username === currentUserData.username
+        ? `<div class="delete delete2" onclick="showModal(${comment.id})">
+                    <img src="assets/images/icon-delete.svg" alt="Delete Icon" class="replayIcon"> Delete
+                  </div>`
+        : ""
+      }
+
+      ${comment.user.username === currentUserData.username ? ` <div class="edit edit2" onclick="editComment(${comment.id})">
+              <img src="assets/images/icon-edit.svg" alt="Reply Icon" class="replayIcon"> Edit
+            </div>`: ` <div class="replay replay2" onclick="showReplyBox(${comment.id})">
+              <img src="assets/images/icon-reply.svg" alt="Reply Icon" class="replayIcon"> Reply
+            </div>` }
+          
+           
+           
+          </div>
+
+    </div>
+
       <div class="details">
         <div class="profile">
           <div class="person">
@@ -116,6 +138,7 @@ function renderComments(commentsArray, parentElement, isReply = false) {
           ${comment.content}
         </div>
       </div>
+
     </div>`;
 
     // Append replies container
@@ -165,15 +188,15 @@ const closeModal = () => {
 
 let awi = document.querySelector(".awi")
 // Show Reply Box
+// Show Reply Box
 function showReplyBox(commentId) {
-
   let parentComment = document.querySelector(`[data-id="${commentId}"]`);
   let replyBox = document.createElement("div");
   replyBox.className = "profilePic replyBox";
 
   replyBox.innerHTML = `
-    <img src=${currentUserData.image.png} alt="Current User">
-    <textarea placeholder="Add a comment..." name="" id="" cols="50" rows="10"></textarea>
+    <img class="profilePic" src=${currentUserData.image.png} alt="Current User">
+    <textarea placeholder="Add a comment..." name="" id="commentTextArea" cols="50" rows="10"></textarea>
     <button class="send" onclick="addReply(${commentId})">Send</button>
   `;
 
@@ -182,16 +205,18 @@ function showReplyBox(commentId) {
     parentComment.appendChild(replyBox);
   }
 
-  // console.log(replyBox,'=======replyBox')
-  let replyy = document.querySelector('.replay')
-  console.log(replyy, "==========reply")
-  // replyy.addEventListener('click', function () {
-  const replyBoxs = document.querySelector('.replyBox');
-  console.log(replyBoxs, ",=====replayBox")
-  replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  // });
+  // Add Enter key event listener
+  let textarea = replyBox.querySelector("textarea");
+  textarea.addEventListener("keyup", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault(); // Prevent newline
+      addReply(commentId);
+    }
+  });
 
+  replyBox.scrollIntoView({ behavior: "smooth", block: "center" });
 }
+
 
 // Add Comment
 function addComment() {
@@ -200,7 +225,7 @@ function addComment() {
   if (commentText.trim() !== "") {
     const getCurrentTime = () => {
       const now = new Date();
-      return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+      return `${now.getHours() / 2}:${now.getMinutes()}:${now.getSeconds()}`;
     };
 
     let newComment = {
@@ -213,7 +238,7 @@ function addComment() {
         username: currentUserData.username
       },
       replies: [],
-      isNew: true  // Flag to identify the latest comment
+      isNew: true // Flag to identify the latest comment
     };
 
     comments.push(newComment);
@@ -228,14 +253,15 @@ function addComment() {
     let commentParent = document.querySelector(".comments");
     commentParent.innerHTML = "";
     renderComments(comments, commentParent);
-  }
-  // let replyy = document.querySelector('.replay')
-  // console.log(replyy,"==========reply")
-  // replyy.addEventListener('click', function () {
-  const commentParents = document.querySelector('.');
-  console.log(replyBoxs,",=====replayBox")
-  replyBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
+    // Focus on the newly added comment
+    setTimeout(() => {
+      let newCommentElement = document.querySelector(`[data-id="${newComment.id}"]`);
+      if (newCommentElement) {
+        newCommentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 0);
+  }
 }
 
 // Add Reply
@@ -398,6 +424,7 @@ window.onload = function () {
 };
 
 // Edit Comment
+// Edit Comment
 function editComment(commentId) {
   let commentBox = document.querySelector(`[data-id="${commentId}"]`);
   let para = commentBox.querySelector(".para");
@@ -411,7 +438,17 @@ function editComment(commentId) {
     <button class="update" onclick="updateComment(${commentId})">Update</button>
     </div>
   `;
+
+  // Add Enter key event listener
+  let textarea = commentBox.querySelector(".editTextarea");
+  textarea.addEventListener("keyup", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault(); // Prevent newline
+      updateComment(commentId);
+    }
+  });
 }
+
 
 // Update Comment
 function updateComment(commentId) {
